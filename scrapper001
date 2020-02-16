@@ -1,0 +1,55 @@
+from requests import get
+url = "https://www.nepremicnine.net/oglasi-prodaja/"
+response = get(url)
+
+from bs4 import BeautifulSoup
+html_soup = BeautifulSoup(response.text, 'html.parser')
+
+#get the macro-container for the housing posts
+posts = html_soup.find_all("div", {"itemprop": "itemListElement"})  #vsak oglas na strani posebej
+print(type(posts)) #to double check that I got a ResultSet
+print(len(posts)) #to double check I got 120 (elements/page)
+
+#spreminjaj številko --> kateri oglas na strani me zanima
+post_one = posts[23]
+
+
+#poišči url do oglasa
+post_one_url = post_one.find("meta", {"itemprop": "mainEntityOfPage"}) #ekstrakta cel meta tag
+print(post_one_url["content"]) #iz meta tag-a izvozi samo content (url)
+
+
+#izpiši kodo določenega oglasa
+#print(post_one)
+
+
+#dostop do strani samega oglasa
+subpage = get(post_one_url["content"])
+post_page_soup = BeautifulSoup(subpage.text, "html.parser")
+
+post_one_description = post_page_soup.find("div", {"itemprop": "description"}).text.split(", ")
+print(post_one_description)
+
+for i in range(len(post_one_description)):
+    if post_one_description[i][-2:] == "m2":
+        post_one_povrsina = float(post_one_description[i][:-3].replace(",","."))
+print(post_one_povrsina)
+
+post_one_cena = post_one.find("meta", {"itemprop": "price"})
+print(post_one_cena["content"])
+
+post_one_pricesquaremeter = round(float(post_one_cena["content"])/post_one_povrsina, 2)
+print(post_one_pricesquaremeter)
+
+post_one_vrsta = post_page_soup.find("div", {"class": "more_info"}).string.split("|")[1].split(": ")[1]
+print(post_one_vrsta)
+post_one_regija = post_page_soup.find("div", {"class": "more_info"}).string.split("|")[2].split(": ")[1]
+print(post_one_regija)
+post_one_upravnaenota = post_page_soup.find("div", {"class": "more_info"}).string.split("|")[3].split(": ")[1]
+print(post_one_upravnaenota)
+post_one_obcina = post_page_soup.find("div", {"class": "more_info"}).string.split("|")[4].split(": ")[1]
+print(post_one_obcina)
+
+
+
+
